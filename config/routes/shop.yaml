@@ -1,0 +1,10 @@
+agent001_sylius_ai_assistant_shop_api:
+    path: /agent001/v1
+    condition: 'false'
+
+agent001_sylius_ai_assistant_shop_order_lookup:
+    path: /agent001/v1/orders/{number}
+    methods: [GET, POST, OPTIONS]
+    requirements:
+        number: '[A-Za-z0-9_-]{1,64}'
+    controller: Agent001\SyliusAiAssistantPlugin\Controller\Api\OrderLookupController

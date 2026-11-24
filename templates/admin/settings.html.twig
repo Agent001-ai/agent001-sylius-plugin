@@ -1,0 +1,16 @@
+{% extends '@SyliusAdmin/shared/layout/base.html.twig' %}
+
+{% block title %}{{ 'agent001_sylius_ai_assistant.ui.title'|trans }} | Sylius{% endblock %}
+
+{% block body %}
+    {% hook ['agent001_sylius_ai_assistant_admin.settings', 'sylius_admin.common.index'] with {
+        connection: connection,
+        channels: channels,
+        settings: settings,
+        agents: agents,
+        agents_failed: agents_failed,
+        owners: owners,
+        taxons: taxons,
+        create_agent_urls: create_agent_urls,
+    } %}
+{% endblock %}

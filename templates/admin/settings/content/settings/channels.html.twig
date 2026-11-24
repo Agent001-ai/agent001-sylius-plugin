@@ -1,0 +1,199 @@
+{% set connection = hookable_metadata.context.connection|default(null) %}
+{% set channels = hookable_metadata.context.channels %}
+{% set settings = hookable_metadata.context.settings %}
+{% set agents = hookable_metadata.context.agents %}
+{% set agents_failed = hookable_metadata.context.agents_failed %}
+{% set owners = hookable_metadata.context.owners %}
+{% set create_agent_urls = hookable_metadata.context.create_agent_urls %}
+{% set badges = {
+    'queued': 'bg-secondary-lt',
+    'reading': 'bg-blue-lt',
+    'indexing': 'bg-blue-lt',
+    'success': 'bg-green-lt',
+    'failed': 'bg-red-lt',
+} %}
+
+{% if connection and connection.connected %}
+    {% set assigned = settings|filter(setting => setting.hasAgent) %}
+    {% set any_taken = channels|length > 1 and agents|filter(agent => owners[agent.id] ?? null) is not empty %}
+    {% if agents is empty and not agents_failed and assigned is empty %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2 class="card-title">{{ 'agent001_sylius_ai_assistant.ui.channels'|trans }}</h2>
+            </div>
+            <div class="empty" data-agent001-no-agents>
+                <div class="empty-icon">{{ ux_icon('tabler:bubble-text', {'class': 'icon'}) }}</div>
+                <p class="empty-title">{{ 'agent001_sylius_ai_assistant.ui.no_agents_title'|trans }}</p>
+                <p class="empty-subtitle text-secondary">
+                    {{ 'agent001_sylius_ai_assistant.ui.no_agents_description'|trans }}
+                </p>
+                {% if create_agent_urls is not empty %}
+                    <div class="empty-action">
+                        <a href="{{ create_agent_urls|first }}" target="_blank" rel="noopener noreferrer"
+                           class="btn btn-primary">
+                            {{ ux_icon('tabler:plus', {'class': 'icon'}) }}
+                            {{ 'agent001_sylius_ai_assistant.ui.create_first_agent'|trans }}
+                            {{ ux_icon('tabler:external-link', {'class': 'icon ms-1 me-0'}) }}
+                            <span class="visually-hidden">{{ 'agent001_sylius_ai_assistant.ui.new_tab'|trans }}</span>
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <form action="{{ path('agent001_sylius_ai_assistant_admin_settings_agents') }}" method="post"
+              class="card mb-4">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('agent001_sylius_ai_assistant_agents') }}">
+            <div class="card-header">
+                <h2 class="card-title">{{ 'agent001_sylius_ai_assistant.ui.channels'|trans }}</h2>
+            </div>
+            {% if agents_failed %}
+                <div class="card-body pb-0">
+                    <div class="alert alert-warning" role="alert">
+                        {{ ux_icon('tabler:alert-triangle', {'class': 'icon alert-icon'}) }}
+                        {{ 'agent001_sylius_ai_assistant.ui.agents_failed'|trans }}
+                    </div>
+                </div>
+            {% endif %}
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                        <tr>
+                            <th>{{ 'agent001_sylius_ai_assistant.ui.channel'|trans }}</th>
+                            <th>{{ 'agent001_sylius_ai_assistant.ui.agent'|trans }}</th>
+                            <th>{{ 'agent001_sylius_ai_assistant.ui.chat'|trans }}</th>
+                            <th>{{ 'agent001_sylius_ai_assistant.ui.status'|trans }}</th>
+                            <th>{{ 'agent001_sylius_ai_assistant.ui.products'|trans }}</th>
+                            <th>{{ 'agent001_sylius_ai_assistant.ui.last_sync'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for code, channel in channels %}
+                            {% set setting = settings[code] ?? null %}
+                            {% set taken = agents|filter(agent => (owners[agent.id] ?? code) != code) %}
+                            {% set unavailable = setting and setting.hasAgent
+                                and setting.agentId not in agents|column('id') %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ channel.name }}</div>
+                                    <div class="text-secondary small">
+                                        {{ code }} · {{ channel.hostname ?: '-' }}
+                                        · {{ channel.defaultLocale ? channel.defaultLocale.code : '-' }}
+                                    </div>
+                                </td>
+                                <td class="agent001-agent-cell">
+                                    <label class="visually-hidden" for="agent001-agent-{{ code }}">
+                                        {{ 'agent001_sylius_ai_assistant.ui.agent_for'|trans({
+                                            '%channel%': channel.name,
+                                        }) }}
+                                    </label>
+                                    <select name="agent[{{ code }}]" id="agent001-agent-{{ code }}"
+                                            class="form-select"
+                                            {% if taken is not empty %}
+                                                aria-describedby="agent001-taken"
+                                            {% endif %}
+                                            {% if agents_failed %}disabled{% endif %}>
+                                        <option value="">{{ 'agent001_sylius_ai_assistant.ui.no_agent'|trans }}</option>
+                                        {% if unavailable %}
+                                            <option value="{{ setting.agentId }}" selected>
+                                                {{ 'agent001_sylius_ai_assistant.ui.agent_unavailable'|trans }}
+                                            </option>
+                                        {% endif %}
+                                        {% for agent in agents %}
+                                            {% set owner = owners[agent.id] ?? null %}
+                                            <option value="{{ agent.id }}"
+                                                {% if setting and setting.agentId == agent.id %}selected{% endif %}
+                                                {% if owner and owner != code %}disabled{% endif %}>
+                                                {{ agent.name }}
+                                                {% if owner and owner != code %}
+                                                    {{ 'agent001_sylius_ai_assistant.ui.agent_assigned_to'|trans({
+                                                        '%channel%': channels[owner].name ?? owner,
+                                                    }) }}
+                                                {% endif %}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <a href="{{ create_agent_urls[code] }}" target="_blank" rel="noopener noreferrer"
+                                       class="btn btn-sm btn-ghost-primary mt-2">
+                                        {{ ux_icon('tabler:plus', {'class': 'icon'}) }}
+                                        {{ 'agent001_sylius_ai_assistant.ui.create_agent'|trans }}
+                                        {{ ux_icon('tabler:external-link', {'class': 'icon ms-1 me-0'}) }}
+                                        <span class="visually-hidden">
+                                            {{ 'agent001_sylius_ai_assistant.ui.new_tab'|trans }}
+                                        </span>
+                                    </a>
+                                </td>
+                                <td>
+                                    {% if setting and setting.hasAgent %}
+                                        {% if setting.widgetVisible %}
+                                            <span class="badge bg-green-lt">
+                                                {{ 'agent001_sylius_ai_assistant.ui.chat_on'|trans }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary-lt">
+                                                {{ 'agent001_sylius_ai_assistant.ui.chat_off'|trans }}
+                                            </span>
+                                        {% endif %}
+                                    {% else %}-{% endif %}
+                                </td>
+                                <td aria-live="polite">
+                                    {% if setting and setting.syncStatus %}
+                                        {% set busy = setting.syncStatus in ['reading', 'indexing'] %}
+                                        {% set label = 'agent001_sylius_ai_assistant.ui.sync_status.'
+                                            ~ setting.syncStatus %}
+                                        {% set failed = setting.syncStatus == 'failed' %}
+                                        <span class="badge {{ badges[setting.syncStatus] ?? 'bg-secondary-lt' }}"
+                                              data-agent001-badge="{{ code }}">
+                                            <span class="spinner-border spinner-border-sm me-1
+                                                         {{- busy ? '' : ' d-none' }}"
+                                                  aria-hidden="true" data-agent001-spinner="{{ code }}"></span>
+                                            <span data-agent001-status="{{ code }}">
+                                                {{- label|trans -}}
+                                            </span>
+                                        </span>
+                                        <div class="text-danger small mt-1{{ failed ? '' : ' d-none' }}"
+                                             data-agent001-error="{{ code }}">
+                                            {%- if failed and setting.syncMessage -%}
+                                                {{ setting.syncMessage|trans(setting.syncMessageParameters) }}
+                                            {%- endif -%}
+                                        </div>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td aria-live="polite" data-agent001-count="{{ code }}">
+                                    {{- setting ? setting.syncCount : '-' -}}
+                                </td>
+                                <td class="text-nowrap">
+                                    {% if setting and setting.lastSyncAt %}
+                                        {{ ux_icon('tabler:history', {'class': 'icon text-secondary'}) }}
+                                        <time datetime="{{ setting.lastSyncAt|date('c') }}">
+                                            {{ setting.lastSyncAt|format_datetime('medium', 'short') }}
+                                        </time>
+                                    {% elseif setting and setting.hasAgent %}
+                                        <span class="text-secondary">
+                                            {{ 'agent001_sylius_ai_assistant.ui.never'|trans }}
+                                        </span>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer d-flex flex-wrap align-items-center gap-2">
+                {% if any_taken %}
+                    <div class="form-hint me-auto" id="agent001-taken">
+                        {{ 'agent001_sylius_ai_assistant.ui.agent_assigned_hint'|trans }}
+                    </div>
+                {% endif %}
+                <button type="submit" class="btn btn-primary ms-auto" {% if agents_failed %}disabled{% endif %}>
+                    {{ ux_icon('tabler:check', {'class': 'icon'}) }}
+                    {{ 'agent001_sylius_ai_assistant.ui.save_agents'|trans }}
+                </button>
+            </div>
+        </form>
+    {% endif %}
+{% endif %}

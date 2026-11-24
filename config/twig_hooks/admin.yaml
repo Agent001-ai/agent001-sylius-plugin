@@ -1,0 +1,41 @@
+sylius_twig_hooks:
+    hooks:
+        'agent001_sylius_ai_assistant_admin.settings.content':
+            grid:
+                enabled: false
+            settings:
+                template: '@Agent001SyliusAiAssistantPlugin/admin/settings/content.html.twig'
+                priority: 100
+
+        'agent001_sylius_ai_assistant_admin.settings.content.header':
+            breadcrumbs:
+                template: '@SyliusAdmin/shared/crud/index/content/header/breadcrumbs.html.twig'
+                configuration:
+                    title: 'agent001_sylius_ai_assistant.ui.title'
+                priority: 100
+
+        'agent001_sylius_ai_assistant_admin.settings.content.header.title_block':
+            title:
+                template: '@SyliusAdmin/shared/crud/common/content/header/title_block/title.html.twig'
+                configuration:
+                    title: 'agent001_sylius_ai_assistant.ui.title'
+                    subheader: 'agent001_sylius_ai_assistant.ui.subtitle'
+                    icon: 'tabler:bubble-text'
+                priority: 100
+
+        'agent001_sylius_ai_assistant_admin.settings.content.settings':
+            getting_started:
+                template: '@Agent001SyliusAiAssistantPlugin/admin/settings/content/settings/getting_started.html.twig'
+                priority: 400
+            connection:
+                template: '@Agent001SyliusAiAssistantPlugin/admin/settings/content/settings/connection.html.twig'
+                priority: 300
+            channels:
+                template: '@Agent001SyliusAiAssistantPlugin/admin/settings/content/settings/channels.html.twig'
+                priority: 200
+            synchronization:
+                template: '@Agent001SyliusAiAssistantPlugin/admin/settings/content/settings/synchronization.html.twig'
+                priority: 100
+            assets:
+                template: '@Agent001SyliusAiAssistantPlugin/admin/settings/content/settings/assets.html.twig'
+                priority: 0

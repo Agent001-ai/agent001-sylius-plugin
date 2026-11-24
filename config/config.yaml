@@ -1,0 +1,17 @@
+framework:
+    rate_limiter:
+        agent001_sylius_ai_assistant_api:
+            policy: 'sliding_window'
+            limit: 10
+            interval: '1 minute'
+            lock_factory: null
+        agent001_sylius_ai_assistant_lookup_failure:
+            policy: 'fixed_window'
+            limit: 5
+            interval: '1 hour'
+            lock_factory: null
+        agent001_sylius_ai_assistant_lookup_email_failure:
+            policy: 'fixed_window'
+            limit: 50
+            interval: '1 hour'
+            lock_factory: null

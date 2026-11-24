@@ -1,0 +1,15 @@
+{% set connection = hookable_metadata.context.connection|default(null) %}
+
+<link rel="stylesheet" href="{{ asset('bundles/agent001syliusaiassistantplugin/admin/settings.css') }}">
+<script src="{{ asset('bundles/agent001syliusaiassistantplugin/admin/settings.js') }}"
+        {% if connection and connection.connected %}
+            data-progress-url="{{ path('agent001_sylius_ai_assistant_admin_settings_progress') }}"
+        {% endif %}
+        data-labels="{{ {
+            'queued': 'agent001_sylius_ai_assistant.ui.sync_status.queued'|trans,
+            'reading': 'agent001_sylius_ai_assistant.ui.sync_status.reading'|trans,
+            'indexing': 'agent001_sylius_ai_assistant.ui.sync_status.indexing'|trans,
+            'success': 'agent001_sylius_ai_assistant.ui.sync_status.success'|trans,
+            'failed': 'agent001_sylius_ai_assistant.ui.sync_status.failed'|trans,
+        }|json_encode }}"
+        defer></script>

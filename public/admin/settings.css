@@ -1,0 +1,8 @@
+[data-agent001-taxons] {
+    max-height: 20rem;
+    overflow-y: auto;
+}
+
+.agent001-agent-cell {
+    min-width: 14rem;
+}

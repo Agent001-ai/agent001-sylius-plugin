@@ -1,0 +1,2 @@
+agent001_sylius_ai_assistant:
+    resource: '@Agent001SyliusAiAssistantPlugin/config/routes.yaml'

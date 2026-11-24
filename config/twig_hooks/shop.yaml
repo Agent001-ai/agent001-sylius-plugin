@@ -1,0 +1,6 @@
+sylius_twig_hooks:
+    hooks:
+        'sylius_shop.base#javascripts':
+            agent001_sylius_ai_assistant_chat_widget:
+                template: '@Agent001SyliusAiAssistantPlugin/shop/widget.html.twig'
+                priority: -100

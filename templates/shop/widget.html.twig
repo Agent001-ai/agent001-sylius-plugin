@@ -1,0 +1,8 @@
+{% set agent001 = agent001_sylius_ai_assistant_widget() %}
+{% if agent001 %}
+    <script src="{{ agent001.src }}"
+            data-token="{{ agent001.token }}"
+            data-plugin-key="{{ agent001.key }}"
+            data-plugin-rest="{{ agent001.rest }}"
+            async></script>
+{% endif %}

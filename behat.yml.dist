@@ -1,0 +1,62 @@
+default:
+    formatters:
+        pretty:
+            verbose: true
+            paths: false
+            snippets: false
+
+    extensions:
+        Behat\MinkExtension:
+            base_url: 'http://localhost/'
+            default_session: symfony
+            sessions:
+                symfony:
+                    symfony: ~
+
+        FriendsOfBehat\SymfonyExtension:
+            bootstrap: vendor/sylius/test-application/config/bootstrap.php
+            kernel:
+                class: Sylius\TestApplication\Kernel
+                environment: test
+
+    suites:
+        agent001_connecting_store:
+            paths: ['%paths.base%/features/admin/connecting_store_with_agent001.feature']
+            contexts:
+                - sylius.behat.context.hook.doctrine_orm
+                - sylius.behat.context.transform.channel
+                - sylius.behat.context.setup.channel
+                - sylius.behat.context.setup.admin_security
+                - agent001_sylius_ai_assistant.behat.context.setup.agent001
+                - agent001_sylius_ai_assistant.behat.context.ui.admin.managing_agent001
+
+        agent001_assigning_agents:
+            paths: ['%paths.base%/features/admin/assigning_agents_to_sales_channels.feature']
+            contexts:
+                - sylius.behat.context.hook.doctrine_orm
+                - sylius.behat.context.transform.channel
+                - sylius.behat.context.setup.channel
+                - sylius.behat.context.setup.admin_security
+                - agent001_sylius_ai_assistant.behat.context.setup.agent001
+                - agent001_sylius_ai_assistant.behat.context.ui.admin.managing_agent001
+
+        agent001_chat_widget:
+            paths: ['%paths.base%/features/shop/displaying_chat_widget.feature']
+            contexts:
+                - sylius.behat.context.hook.doctrine_orm
+                - sylius.behat.context.transform.channel
+                - sylius.behat.context.setup.channel
+                - agent001_sylius_ai_assistant.behat.context.setup.agent001
+                - agent001_sylius_ai_assistant.behat.context.ui.shop.chat_widget
+
+        agent001_order_lookup:
+            paths: ['%paths.base%/features/api/checking_order_status_in_chat.feature']
+            contexts:
+                - sylius.behat.context.hook.doctrine_orm
+                - sylius.behat.context.transform.channel
+                - sylius.behat.context.transform.customer
+                - sylius.behat.context.transform.order
+                - sylius.behat.context.setup.channel
+                - sylius.behat.context.setup.order
+                - agent001_sylius_ai_assistant.behat.context.setup.agent001
+                - agent001_sylius_ai_assistant.behat.context.api.order_lookup

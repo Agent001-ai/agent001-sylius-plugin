@@ -1,0 +1,39 @@
+agent001_sylius_ai_assistant_admin_settings:
+    path: /agent001
+    methods: [GET]
+    controller: Agent001\SyliusAiAssistantPlugin\Controller\Admin\SettingsController::index
+
+agent001_sylius_ai_assistant_admin_settings_agents:
+    path: /agent001/agents
+    methods: [POST]
+    controller: Agent001\SyliusAiAssistantPlugin\Controller\Admin\SettingsController::agents
+
+agent001_sylius_ai_assistant_admin_settings_toggle:
+    path: /agent001/toggle
+    methods: [POST]
+    controller: Agent001\SyliusAiAssistantPlugin\Controller\Admin\SettingsController::toggle
+
+agent001_sylius_ai_assistant_admin_settings_catalog:
+    path: /agent001/catalog
+    methods: [POST]
+    controller: Agent001\SyliusAiAssistantPlugin\Controller\Admin\SettingsController::catalog
+
+agent001_sylius_ai_assistant_admin_settings_progress:
+    path: /agent001/progress
+    methods: [GET]
+    controller: Agent001\SyliusAiAssistantPlugin\Controller\Admin\SettingsController::progress
+
+agent001_sylius_ai_assistant_admin_connect_start:
+    path: /agent001/connect
+    methods: [POST]
+    controller: Agent001\SyliusAiAssistantPlugin\Controller\Admin\ConnectController::start
+
+agent001_sylius_ai_assistant_admin_connect_callback:
+    path: /agent001/callback
+    methods: [GET]
+    controller: Agent001\SyliusAiAssistantPlugin\Controller\Admin\ConnectController::callback
+
+agent001_sylius_ai_assistant_admin_disconnect:
+    path: /agent001/disconnect
+    methods: [POST]
+    controller: Agent001\SyliusAiAssistantPlugin\Controller\Admin\ConnectController::disconnect

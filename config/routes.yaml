@@ -1,0 +1,7 @@
+agent001_sylius_ai_assistant_admin:
+    resource: '@Agent001SyliusAiAssistantPlugin/config/routes/admin.yaml'
+    prefix: '/%sylius_admin.path_name%'
+
+agent001_sylius_ai_assistant_shop:
+    resource: '@Agent001SyliusAiAssistantPlugin/config/routes/shop.yaml'
+    prefix: /

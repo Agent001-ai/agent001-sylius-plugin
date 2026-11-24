@@ -1,0 +1,99 @@
+name: Build & Test
+
+on:
+    push:
+        branches: [ main, master ]
+    pull_request:
+        branches: [ main, master ]
+
+jobs:
+    tests:
+        name: "PHP ${{ matrix.php }}, Sylius ${{ matrix.sylius }}, Symfony ${{ matrix.symfony }}${{ matrix.dependencies == 'lowest' && ', lowest' || '' }}"
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - { php: '8.2', sylius: '~2.2.13', symfony: '6.4.*', dependencies: highest }
+                    - { php: '8.2', sylius: '~2.2.13', symfony: '7.4.*', dependencies: highest }
+                    - { php: '8.3', sylius: '^2.3.3', symfony: '6.4.*', dependencies: highest }
+                    - { php: '8.4', sylius: '^2.3.3', symfony: '7.4.*', dependencies: highest }
+                    - { php: '8.2', sylius: '~2.2.13', symfony: '6.4.*', dependencies: lowest }
+
+        env:
+            APP_ENV: test
+            DATABASE_URL: 'mysql://root:root@127.0.0.1:3306/sylius_test?serverVersion=8.0'
+
+        services:
+            mysql:
+                image: mysql:8.0
+                env:
+                    MYSQL_ROOT_PASSWORD: root
+                ports:
+                    - 3306:3306
+                options: >-
+                    --health-cmd="mysqladmin ping -proot"
+                    --health-interval=10s
+                    --health-timeout=5s
+                    --health-retries=10
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: ${{ matrix.php }}
+                  extensions: intl, gd, pdo_mysql, mbstring, exif
+                  tools: composer:v2, flex
+                  coverage: none
+
+            - name: Validate composer.json
+              run: composer validate --strict
+
+            - name: Restrict Sylius and Symfony versions
+              run: |
+                  composer config extra.symfony.require "${{ matrix.symfony }}"
+                  composer require "sylius/sylius:${{ matrix.sylius }}" --no-update --no-scripts --no-interaction
+
+            - name: Install dependencies
+              run: composer update --no-interaction --no-progress --prefer-dist
+
+            - name: Downgrade direct dependencies to their lowest versions
+              if: matrix.dependencies == 'lowest'
+              run: >-
+                  composer update --no-interaction --no-progress --prefer-dist --prefer-lowest
+                  sylius/sylius symfony/http-client symfony/messenger symfony/rate-limiter
+
+            - name: Check coding standard
+              run: vendor/bin/ecs check --no-progress-bar
+
+            - name: Run PHPStan
+              run: vendor/bin/phpstan analyse -c phpstan.neon --no-progress
+
+            - name: Run unit tests
+              run: vendor/bin/phpunit --no-coverage --testsuite Unit
+
+            - name: Lint container, templates and YAML
+              run: |
+                  vendor/bin/console lint:container
+                  vendor/bin/console lint:twig templates
+                  vendor/bin/console lint:yaml config translations tests/TestApplication/config .github --parse-tags
+
+            - name: Run migrations on an empty database
+              run: |
+                  vendor/bin/console doctrine:database:create --if-not-exists
+                  vendor/bin/console doctrine:migrations:migrate --no-interaction
+
+            - name: Validate plugin schema
+              run: |
+                  vendor/bin/console doctrine:schema:validate --skip-sync
+                  vendor/bin/console doctrine:schema:update --dump-sql > schema-diff.sql
+                  ! grep -i 'agent001_' schema-diff.sql
+
+            - name: Run functional tests
+              run: vendor/bin/phpunit --no-coverage --testsuite Functional
+
+            - name: Run Behat scenarios
+              run: vendor/bin/behat --strict --no-interaction --format=progress

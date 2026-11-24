@@ -1,0 +1,72 @@
+{% set connection = hookable_metadata.context.connection|default(null) %}
+{% set channels = hookable_metadata.context.channels %}
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h2 class="card-title">{{ 'agent001_sylius_ai_assistant.ui.connection'|trans }}</h2>
+        {% if connection and connection.connected %}
+            <div class="card-actions">
+                <span class="badge bg-green-lt" data-agent001-connected>
+                    {{ ux_icon('tabler:circle-check', {'class': 'icon me-1'}) }}
+                    {{ 'agent001_sylius_ai_assistant.ui.connected'|trans }}
+                </span>
+            </div>
+        {% endif %}
+    </div>
+    {% if connection and connection.connected %}
+        <div class="card-body">
+            <div class="datagrid mb-3">
+                <div class="datagrid-item">
+                    <div class="datagrid-title">{{ 'agent001_sylius_ai_assistant.ui.account'|trans }}</div>
+                    <div class="datagrid-content">{{ connection.accountName ?: '-' }}</div>
+                </div>
+                <div class="datagrid-item">
+                    <div class="datagrid-title">{{ 'agent001_sylius_ai_assistant.ui.site'|trans }}</div>
+                    <div class="datagrid-content text-break">{{ connection.site ?: '-' }}</div>
+                </div>
+            </div>
+            <div class="btn-list">
+                <form action="{{ path('agent001_sylius_ai_assistant_admin_connect_start') }}" method="post">
+                    <input type="hidden" name="_csrf_token"
+                           value="{{ csrf_token('agent001_sylius_ai_assistant_connect') }}">
+                    <button type="submit" class="btn">
+                        {{ ux_icon('tabler:arrow-back-up', {'class': 'icon'}) }}
+                        {{ 'agent001_sylius_ai_assistant.ui.reconnect'|trans }}
+                    </button>
+                </form>
+                <form action="{{ path('agent001_sylius_ai_assistant_admin_disconnect') }}" method="post"
+                      data-agent001-confirm="{{ 'agent001_sylius_ai_assistant.ui.disconnect_confirm'|trans }}">
+                    <input type="hidden" name="_csrf_token"
+                           value="{{ csrf_token('agent001_sylius_ai_assistant_disconnect') }}">
+                    <button type="submit" class="btn btn-outline-danger">
+                        {{ ux_icon('tabler:logout', {'class': 'icon'}) }}
+                        {{ 'agent001_sylius_ai_assistant.ui.disconnect'|trans }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty">
+            <div class="empty-icon">{{ ux_icon('tabler:plug', {'class': 'icon'}) }}</div>
+            <p class="empty-title">{{ 'agent001_sylius_ai_assistant.ui.not_connected_title'|trans }}</p>
+            <p class="empty-subtitle text-secondary">
+                {{ 'agent001_sylius_ai_assistant.ui.connect_description'|trans }}
+            </p>
+            {% if channels is empty %}
+                <div class="alert alert-warning" role="alert">
+                    {{ 'agent001_sylius_ai_assistant.ui.no_channels'|trans }}
+                </div>
+            {% endif %}
+            <div class="empty-action">
+                <form action="{{ path('agent001_sylius_ai_assistant_admin_connect_start') }}" method="post">
+                    <input type="hidden" name="_csrf_token"
+                           value="{{ csrf_token('agent001_sylius_ai_assistant_connect') }}">
+                    <button type="submit" class="btn btn-primary" {% if channels is empty %}disabled{% endif %}>
+                        {{ ux_icon('tabler:plug', {'class': 'icon'}) }}
+                        {{ 'agent001_sylius_ai_assistant.ui.connect'|trans }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+</div>

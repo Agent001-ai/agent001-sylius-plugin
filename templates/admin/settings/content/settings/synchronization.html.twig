@@ -1,0 +1,141 @@
+{% set connection = hookable_metadata.context.connection|default(null) %}
+{% set channels = hookable_metadata.context.channels %}
+{% set settings = hookable_metadata.context.settings %}
+{% set taxons = hookable_metadata.context.taxons %}
+{% set alerts = {'success': 'alert-success', 'failed': 'alert-danger'} %}
+
+{% if connection and connection.connected %}
+    {% for code, channel in channels %}
+        {% set setting = settings[code] ?? null %}
+        {% if setting and setting.hasAgent %}
+            {% set running = setting.syncRunning %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div>
+                        <h2 class="card-title">{{ channel.name }}</h2>
+                        <div class="card-subtitle">{{ 'agent001_sylius_ai_assistant.ui.catalog_sync'|trans }}</div>
+                    </div>
+                    <div class="card-actions btn-list align-items-center">
+                        {% if setting.widgetVisible %}
+                            <span class="badge bg-green-lt">
+                                {{ ux_icon('tabler:eye', {'class': 'icon me-1'}) }}
+                                {{ 'agent001_sylius_ai_assistant.ui.chat'|trans }}:
+                                {{ 'agent001_sylius_ai_assistant.ui.chat_on'|trans }}
+                            </span>
+                        {% else %}
+                            <span class="badge bg-secondary-lt">
+                                {{ 'agent001_sylius_ai_assistant.ui.chat'|trans }}:
+                                {{ 'agent001_sylius_ai_assistant.ui.chat_off'|trans }}
+                            </span>
+                        {% endif %}
+                        <form action="{{ path('agent001_sylius_ai_assistant_admin_settings_toggle') }}" method="post">
+                            <input type="hidden" name="_csrf_token"
+                                   value="{{ csrf_token('agent001_sylius_ai_assistant_toggle') }}">
+                            <input type="hidden" name="channel" value="{{ code }}">
+                            {% if setting.agentActive %}
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    {{ ux_icon('tabler:slash', {'class': 'icon'}) }}
+                                    {{ 'agent001_sylius_ai_assistant.ui.disable_agent'|trans }}
+                                </button>
+                            {% else %}
+                                <button type="submit" class="btn btn-sm btn-primary">
+                                    {{ ux_icon('tabler:eye', {'class': 'icon'}) }}
+                                    {{ 'agent001_sylius_ai_assistant.ui.enable_agent'|trans }}
+                                </button>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+                <form action="{{ path('agent001_sylius_ai_assistant_admin_settings_catalog') }}" method="post"
+                      class="card-body" data-agent001-catalog>
+                    <input type="hidden" name="_csrf_token"
+                           value="{{ csrf_token('agent001_sylius_ai_assistant_catalog') }}">
+                    <input type="hidden" name="channel" value="{{ code }}">
+                    {% if not setting.setupCompleted %}
+                        <div class="alert alert-info" role="status">
+                            {{ ux_icon('tabler:info-circle', {'class': 'icon alert-icon'}) }}
+                            {{ 'agent001_sylius_ai_assistant.ui.first_sync_hint'|trans }}
+                        </div>
+                    {% endif %}
+                    {% if taxons[code] is not empty %}
+                        {% set taxon_codes = taxons[code]|map(taxon => taxon.code) %}
+                        {% set selected = taxons[code]|filter(taxon => setting.taxonCodes is empty
+                            or taxon.code in setting.taxonCodes)|length %}
+                        <fieldset class="mb-3" data-agent001-taxon-group>
+                            <legend class="form-label">{{ 'agent001_sylius_ai_assistant.ui.taxons'|trans }}</legend>
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                <span class="badge bg-secondary-lt" aria-live="polite" data-agent001-taxon-count
+                                      data-template="{{ 'agent001_sylius_ai_assistant.ui.taxons_selected'|trans }}">
+                                    {{ 'agent001_sylius_ai_assistant.ui.taxons_selected'|trans({
+                                        '%selected%': selected,
+                                        '%total%': taxons[code]|length,
+                                    }) }}
+                                </span>
+                                <button type="button" class="btn btn-sm btn-link" data-agent001-select="all">
+                                    {{ 'agent001_sylius_ai_assistant.ui.select_all'|trans }}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-link" data-agent001-select="none">
+                                    {{ 'agent001_sylius_ai_assistant.ui.deselect_all'|trans }}
+                                </button>
+                            </div>
+                            <div class="row" data-agent001-taxons>
+                                {% for taxon in taxons[code] %}
+                                    <label class="form-check col-sm-6 col-lg-4">
+                                        {% set checked = setting.taxonCodes is empty
+                                            or taxon.code in setting.taxonCodes %}
+                                        <input class="form-check-input" type="checkbox" name="taxons[]"
+                                               value="{{ taxon.code }}" {% if checked %}checked{% endif %}>
+                                        <span class="form-check-label">
+                                            {%- if taxon.parent and taxon.parent.code in taxon_codes -%}
+                                                <span class="text-secondary">
+                                                    {{- taxon.parent.name|default(taxon.parent.code) }} /
+                                                </span>
+                                            {% endif -%}
+                                            {{ taxon.name|default(taxon.code) -}}
+                                        </span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </fieldset>
+                    {% endif %}
+                    <div class="alert {{ alerts[setting.syncStatus] ?? 'alert-info' }}
+                                {{- setting.syncMessage ? '' : ' d-none' }}"
+                         role="status" aria-live="polite" data-agent001-alert="{{ code }}">
+                        {% set tone = setting.syncStatus in ['success', 'failed'] ? setting.syncStatus : 'info' %}
+                        <span class="{{ tone == 'success' ? '' : 'd-none' }}" data-agent001-alert-icon="success">
+                            {{- ux_icon('tabler:circle-check', {'class': 'icon alert-icon'}) -}}
+                        </span>
+                        <span class="{{ tone == 'failed' ? '' : 'd-none' }}" data-agent001-alert-icon="failed">
+                            {{- ux_icon('tabler:alert-triangle', {'class': 'icon alert-icon'}) -}}
+                        </span>
+                        <span class="{{ tone == 'info' ? '' : 'd-none' }}" data-agent001-alert-icon="info">
+                            {{- ux_icon('tabler:info-circle', {'class': 'icon alert-icon'}) -}}
+                        </span>
+                        <span data-agent001-message="{{ code }}">
+                            {%- if setting.syncMessage -%}
+                                {{ setting.syncMessage|trans(setting.syncMessageParameters) }}
+                            {%- endif -%}
+                        </span>
+                    </div>
+                    <button type="submit" class="btn btn-primary" data-agent001-sync="{{ code }}"
+                            data-label-idle="{{ 'agent001_sylius_ai_assistant.ui.sync'|trans }}"
+                            data-label-busy="{{ 'agent001_sylius_ai_assistant.ui.syncing'|trans }}"
+                            {% if running %}disabled{% endif %}>
+                        <span class="spinner-border spinner-border-sm me-2{{ running ? '' : ' d-none' }}"
+                              aria-hidden="true" data-agent001-sync-spinner></span>
+                        <span class="{{ running ? 'd-none' : '' }}" data-agent001-sync-icon>
+                            {{- ux_icon('tabler:send', {'class': 'icon'}) -}}
+                        </span>
+                        <span data-agent001-sync-label>
+                            {%- if running -%}
+                                {{ 'agent001_sylius_ai_assistant.ui.syncing'|trans }}
+                            {%- else -%}
+                                {{ 'agent001_sylius_ai_assistant.ui.sync'|trans }}
+                            {%- endif -%}
+                        </span>
+                    </button>
+                </form>
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}

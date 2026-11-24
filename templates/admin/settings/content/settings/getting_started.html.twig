@@ -1,0 +1,39 @@
+{% set connection = hookable_metadata.context.connection|default(null) %}
+{% set settings = hookable_metadata.context.settings %}
+{% set connected = connection and connection.connected %}
+{% set assigned = settings|filter(setting => setting.hasAgent) %}
+{% set pending = assigned|filter(setting => not setting.setupCompleted) %}
+{% set live = assigned|filter(setting => setting.widgetVisible) %}
+
+{% if not connected %}
+    {% set step = 1 %}
+    {% set hint = 'hint_connect' %}
+{% elseif assigned is empty %}
+    {% set step = 2 %}
+    {% set hint = 'hint_assign' %}
+{% elseif pending is not empty %}
+    {% set step = 3 %}
+    {% set hint = 'hint_sync' %}
+{% else %}
+    {% set step = 4 %}
+    {% set hint = live is empty ? 'hint_enable' : 'hint_live' %}
+{% endif %}
+
+<div class="card mb-4" data-agent001-getting-started>
+    <div class="card-header">
+        <h2 class="card-title">{{ 'agent001_sylius_ai_assistant.ui.getting_started.title'|trans }}</h2>
+    </div>
+    <div class="card-body">
+        <ol class="steps steps-counter steps-green border-0 ms-0 ps-0 my-2">
+            {% for key in ['connect', 'assign', 'sync', 'live'] %}
+                <li class="step-item{% if loop.index == step %} active{% endif %}"
+                    {% if loop.index == step %}aria-current="step"{% endif %}>
+                    {{ ('agent001_sylius_ai_assistant.ui.getting_started.step_' ~ key)|trans }}
+                </li>
+            {% endfor %}
+        </ol>
+        <p class="text-secondary text-center mb-0 mt-3" data-agent001-getting-started-hint>
+            {{ ('agent001_sylius_ai_assistant.ui.getting_started.' ~ hint)|trans }}
+        </p>
+    </div>
+</div>

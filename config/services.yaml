@@ -1,0 +1,50 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+        bind:
+            $messageBus: '@agent001_sylius_ai_assistant.command_bus'
+
+    Agent001\SyliusAiAssistantPlugin\:
+        resource: '../src/'
+        exclude:
+            - '../src/Entity/'
+            - '../src/Agent/'
+            - '../src/Message/'
+            - '../src/Exception/'
+            - '../src/DependencyInjection/'
+            - '../src/Migrations/'
+
+    Agent001\SyliusAiAssistantPlugin\Client\Agent001Client:
+        arguments:
+            $baseUrl: '%agent001_sylius_ai_assistant.base_url%'
+            $apiBaseUrl: '%agent001_sylius_ai_assistant.api_base_url%'
+
+    Agent001\SyliusAiAssistantPlugin\Reader\StoreContextReader:
+        arguments:
+            $taxonRepository: '@sylius.repository.taxon'
+            $optionRepository: '@sylius.repository.product_option'
+
+    Agent001\SyliusAiAssistantPlugin\Controller\Admin\ConnectController:
+        public: true
+
+    Agent001\SyliusAiAssistantPlugin\Controller\Admin\SettingsController:
+        public: true
+
+    Agent001\SyliusAiAssistantPlugin\Controller\Api\OrderLookupController:
+        public: true
+
+    Agent001\SyliusAiAssistantPlugin\Sync\IndexingWatcher:
+        arguments:
+            $sendersLocator: '@messenger.senders_locator'
+
+    Agent001\SyliusAiAssistantPlugin\Order\OrderLookupThrottle:
+        arguments:
+            $anonymousApiLimiter: '@limiter.agent001_sylius_ai_assistant_api'
+            $failureLimiter: '@limiter.agent001_sylius_ai_assistant_lookup_failure'
+            $emailFailureLimiter: '@limiter.agent001_sylius_ai_assistant_lookup_email_failure'
+
+    Agent001\SyliusAiAssistantPlugin\Order\OrderLookupCors:
+        arguments:
+            $allowedOrigins: '%agent001_sylius_ai_assistant.allowed_origins%'
